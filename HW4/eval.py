@@ -5,73 +5,87 @@ from tensorflow.keras.models import load_model
 from sklearn.metrics import accuracy_score, precision_score, recall_score, confusion_matrix
 
 # Define parameters
-IMG_SIZE = 128  # Ensure this matches the training image size
-IMAGE_EXTENSIONS = ('.jpg', '.jpeg', '.png')
+imgSize = 128  # Ensure this matches the training image size
+imageExtensions = ('.jpg', '.jpeg', '.png')
 
-def load_images_from_directory(directory, label):
+def loadImagesFromDirectory(directory, label):
     images, labels = [], []
-    for img_file in os.listdir(directory):
-        if img_file.endswith(IMAGE_EXTENSIONS):
-            img_path = os.path.join(directory, img_file)
-            img = tf.keras.preprocessing.image.load_img(img_path, target_size=(IMG_SIZE, IMG_SIZE))
-            img_array = tf.keras.preprocessing.image.img_to_array(img)
-            images.append(img_array)
+    for imgFile in os.listdir(directory):
+        if imgFile.endswith(imageExtensions):
+            imgPath = os.path.join(directory, imgFile)
+            img = tf.keras.preprocessing.image.load_img(imgPath, target_size=(imgSize, imgSize))
+            imgArray = tf.keras.preprocessing.image.img_to_array(img)
+            images.append(imgArray)
             labels.append(label)
     return images, labels
 
-def load_data(data_dir):
-    pos_images, pos_labels = load_images_from_directory(os.path.join(data_dir, 'positive'), 1)
-    neg_images, neg_labels = load_images_from_directory(os.path.join(data_dir, 'negative'), 0)
+def loadData(dataDir):
+    posImages, posLabels = loadImagesFromDirectory(os.path.join(dataDir, 'positive'), 1)
+    negImages, negLabels = loadImagesFromDirectory(os.path.join(dataDir, 'negative'), 0)
     
-    images = np.array(pos_images + neg_images) / 255.0  # Normalize to [0,1]
-    labels = np.array(pos_labels + neg_labels)
+    images = np.array(posImages + negImages) / 255.0  # Normalize to [0,1]
+    labels = np.array(posLabels + negLabels)
     
     return images, labels
 
-def evaluate_model(model, images, labels):
-    """Evaluates the model and prints performance metrics."""
+def evaluateModel(model, images, labels, outputFile):
     print("Evaluating model...")
     loss, accuracy = model.evaluate(images, labels, verbose=1)
     predictions = model.predict(images)
-    pred_classes = (predictions > 0.5).astype("int32").flatten()
+    predClasses = (predictions > 0.5).astype("int32").flatten()
     
-    precision = precision_score(labels, pred_classes)
-    recall = recall_score(labels, pred_classes)
-    conf_matrix = confusion_matrix(labels, pred_classes)
-    
-    print(f"\nTest Results:\n-------------------")
-    print(f"Number of test images: {len(images)}")
-    print(f"Positive images: {np.sum(labels)}")
-    print(f"Negative images: {len(labels) - np.sum(labels)}")
-    print(f"Test Loss: {loss:.4f}")
-    print(f"Test Accuracy: {accuracy:.4f}")
-    print(f"Precision: {precision:.4f}")
-    print(f"Recall: {recall:.4f}")
-    print("Confusion Matrix:")
-    print(conf_matrix)
+    precision = precision_score(labels, predClasses)
+    recall = recall_score(labels, predClasses)
+    confMatrix = confusion_matrix(labels, predClasses)
 
-def display_individual_predictions(images, labels, pred_classes):
-    print("\nIndividual Predictions:")
-    for i, (true_label, pred_label) in enumerate(zip(labels, pred_classes)):
-        true_class = "Positive" if true_label == 1 else "Negative"
-        pred_class = "Positive" if pred_label == 1 else "Negative"
-        result = "Correct" if true_label == pred_label else "Wrong"
-        print(f"Image {i+1}: True: {true_class}, Predicted: {pred_class}, {result}")
+    # Format the results
+    results = f"""
+    Test Results:
+    -------------------
+    Number of test images: {len(images)}
+    Positive images: {np.sum(labels)}
+    Negative images: {len(labels) - np.sum(labels)}
+    Test Loss: {loss:.4f}
+    Test Accuracy: {accuracy:.4f}
+    Precision: {precision:.4f}
+    Recall: {recall:.4f}
+    Confusion Matrix:
+    {confMatrix}
+    """
+
+    print(results)  # Display results in console
+    with open(outputFile, "w") as file:
+        file.write(results)  # Save results to file
+
+    print(f"Results saved to {outputFile}")
+
+def displayIndividualPredictions(images, labels, predClasses, outputFile):
+    with open(outputFile, "a") as file:
+        file.write("\nIndividual Predictions:\n")
+        for i, (trueLabel, predLabel) in enumerate(zip(labels, predClasses)):
+            trueClass = "Positive" if trueLabel == 1 else "Negative"
+            predClass = "Positive" if predLabel == 1 else "Negative"
+            result = "Correct" if trueLabel == predLabel else "Wrong"
+            file.write(f"Image {i+1}: True: {trueClass}, Predicted: {predClass}, {result}\n")
+
+    print(f"Individual predictions saved to {outputFile}")
 
 def main():
-    data_dir = 'dataset'  # Set dataset directory
-    model_path = 'model.h5'
-    
+    scriptDir = os.path.dirname(__file__)
+    dataDir = os.path.join(scriptDir, 'Dataset')
+    modelPath = os.path.join(scriptDir, 'Output', 'model.h5')
+    outputFile = os.path.join(scriptDir, 'Output', 'model_eval.txt')
+
     print("Loading model...")
-    model = load_model(model_path)
-    
+    model = load_model(modelPath)
+
     print("Loading data...")
-    images, labels = load_data(data_dir)
+    images, labels = loadData(dataDir)
+
+    evaluateModel(model, images, labels, outputFile)
     
-    evaluate_model(model, images, labels)
-    pred_classes = (model.predict(images) > 0.5).astype("int32").flatten()
-    
-    display_individual_predictions(images, labels, pred_classes)
+    predClasses = (model.predict(images) > 0.5).astype("int32").flatten()
+    displayIndividualPredictions(images, labels, predClasses, outputFile)
 
 if __name__ == "__main__":
     main()
