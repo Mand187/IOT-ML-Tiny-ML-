@@ -16,26 +16,26 @@ NUM_CLASSES = 2  # Binary classification
 LEARNING_RATE = 0.00001
 L2_REG = 1e-4
 
-def load_images_from_directory(directory, label):
+def loadImagesFromDirectory(directory, label):
     images, labels = [], []
-    for img_file in os.listdir(directory):
-        if img_file.endswith(('.jpg', '.jpeg', '.png')):
-            img_path = os.path.join(directory, img_file)
-            img = tf.keras.preprocessing.image.load_img(img_path, target_size=(IMG_SIZE, IMG_SIZE))
-            img_array = tf.keras.preprocessing.image.img_to_array(img)
-            images.append(img_array)
+    for imgFile in os.listdir(directory):
+        if imgFile.endswith(('.jpg', '.jpeg', '.png')):
+            imgPath = os.path.join(directory, imgFile)
+            img = tf.keras.preprocessing.image.load_img(imgPath, target_size=(IMG_SIZE, IMG_SIZE))
+            imgArray = tf.keras.preprocessing.image.img_to_array(img)
+            images.append(imgArray)
             labels.append(label)
     return images, labels
 
-def load_data(data_dir):
-    pos_images, pos_labels = load_images_from_directory(os.path.join(data_dir, 'positive'), 1)
-    neg_images, neg_labels = load_images_from_directory(os.path.join(data_dir, 'negative'), 0)
+def loadData(dataDir):
+    posImages, posLabels = loadImagesFromDirectory(os.path.join(dataDir, 'positive'), 1)
+    negImages, negLabels = loadImagesFromDirectory(os.path.join(dataDir, 'negative'), 0)
     
-    images = np.array(pos_images + neg_images) / 255.0  # Normalize
-    labels = np.array(pos_labels + neg_labels)
+    images = np.array(posImages + negImages) / 255.0  # Normalize
+    labels = np.array(posLabels + negLabels)
     return images, labels
 
-def build_cnn_model():
+def buildCnnModel():
     inputs = Input(shape=(IMG_SIZE, IMG_SIZE, 3))
     x = inputs
     
@@ -57,7 +57,7 @@ def build_cnn_model():
                   metrics=['accuracy'])
     return model
 
-def plot_training_history(history, output_dir):
+def plotTrainingHistory(history, outputDir):
     plt.figure(figsize=(12, 4))
     
     plt.subplot(1, 2, 1)
@@ -77,47 +77,47 @@ def plot_training_history(history, output_dir):
     plt.legend()
     
     plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, 'training_history.png'))
+    plt.savefig(os.path.join(outputDir, 'trainingHistory.png'))
 
-def save_model_and_metrics(model, history, x_train, y_train, x_val, y_val, output_dir):
-    os.makedirs(output_dir, exist_ok=True)
-    model.save(os.path.join(output_dir, 'model.h5'))
+def saveModelAndMetrics(model, history, xTrain, yTrain, xVal, yVal, outputDir):
+    os.makedirs(outputDir, exist_ok=True)
+    model.save(os.path.join(outputDir, 'model.h5'))
     
     # Evaluate model
-    train_loss, train_acc = model.evaluate(x_train, y_train, verbose=0)
-    val_loss, val_acc = model.evaluate(x_val, y_val, verbose=0)
+    trainLoss, trainAcc = model.evaluate(xTrain, yTrain, verbose=0)
+    valLoss, valAcc = model.evaluate(xVal, yVal, verbose=0)
     
     # Save metrics
-    with open(os.path.join(output_dir, 'model_metrics.txt'), 'w') as f:
-        f.write(f"Training Accuracy: {train_acc:.4f}\n")
-        f.write(f"Validation Accuracy: {val_acc:.4f}\n")
-        f.write(f"Positive Samples: {np.sum(y_train) + np.sum(y_val)}\n")
-        f.write(f"Negative Samples: {len(y_train) + len(y_val) - np.sum(y_train) - np.sum(y_val)}\n")
+    with open(os.path.join(outputDir, 'modelMetrics.txt'), 'w') as f:
+        f.write(f"Training Accuracy: {trainAcc:.4f}\n")
+        f.write(f"Validation Accuracy: {valAcc:.4f}\n")
+        f.write(f"Positive Samples: {np.sum(yTrain) + np.sum(yVal)}\n")
+        f.write(f"Negative Samples: {len(yTrain) + len(yVal) - np.sum(yTrain) - np.sum(yVal)}\n")
     
-    plot_training_history(history, output_dir)
+    plotTrainingHistory(history, outputDir)
 
 def main():
-    data_dir = os.path.join(os.path.dirname(__file__), 'dataset')
-    output_dir = os.path.join(os.path.dirname(__file__), 'Output')
+    dataDir = os.path.join(os.path.dirname(__file__), 'dataset')
+    outputDir = os.path.join(os.path.dirname(__file__), 'Output')
     
     # Load and split data
     print("Loading data...")
-    images, labels = load_data(data_dir)
-    x_train, x_val, y_train, y_val = train_test_split(images, labels, test_size=0.2, random_state=42, stratify=labels)
+    images, labels = loadData(dataDir)
+    xTrain, xVal, yTrain, yVal = train_test_split(images, labels, test_size=0.2, random_state=42, stratify=labels)
     
-    print(f"Training samples: {len(x_train)}, Validation samples: {len(x_val)}")
+    print(f"Training samples: {len(xTrain)}, Validation samples: {len(xVal)}")
     
     # Build and train model
     print("Building model...")
-    model = build_cnn_model()
+    model = buildCnnModel()
     model.summary()
     
     print("Training model...")
-    history = model.fit(x_train, y_train, epochs=EPOCHS, batch_size=BATCH_SIZE, validation_data=(x_val, y_val), verbose=1)
+    history = model.fit(xTrain, yTrain, epochs=EPOCHS, batch_size=BATCH_SIZE, validation_data=(xVal, yVal), verbose=1)
     
     # Save results
-    save_model_and_metrics(model, history, x_train, y_train, x_val, y_val, output_dir)
-    print(f"Model and metrics saved in {output_dir}")
+    saveModelAndMetrics(model, history, xTrain, yTrain, xVal, yVal, outputDir)
+    print(f"Model and metrics saved in {outputDir}")
 
 if __name__ == "__main__":
     main()
