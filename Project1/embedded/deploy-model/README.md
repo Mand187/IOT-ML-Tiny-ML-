@@ -1,0 +1,1 @@
+For Deploying Model, Works by taking an image, sending the image to be processed by a python script, and then recieving the processed image to make a prediction

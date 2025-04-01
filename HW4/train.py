@@ -49,7 +49,7 @@ def buildCnnModel():
     # Fully Connected Layers
     x = Flatten()(x)
     x = Dense(128, activation='relu', kernel_regularizer=l2(L2_REG))(x)
-    outputs = Dense(1, activation='sigmoid')(x)  # Binary classification
+    outputs = Dense(1, activation='softmax')(x)  # Binary classification
     
     model = Model(inputs=inputs, outputs=outputs)
     model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE),
