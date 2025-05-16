@@ -1,3 +1,5 @@
-Code REPO for IOT ML class ECGR 4127 taken with Professor Holleman @ UNC Charlotte ECE Department 
+# IoT Machine Learning Repository
 
-Repo Is meant to be run on a Arduino Nano 33 BLE
+This repository contains code and resources for the IoT Machine Learning class (ECGR 4127) with Professor Holleman at the UNC Charlotte ECE Department.
+
+The code is designed to run on an Arduino Nano 33 BLE.
